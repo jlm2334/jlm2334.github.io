@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: Bar Graph comparisons</title>
+		<script type="text/javascript" src="../d3.js"></script>
+		<style type="text/css">
+			
+		    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />	
+			/* No style rules here yet */	
+            
+#boxes {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+  h2 {
+  color: #000000;
+  text-align: center;
+  font-family: arial, sans-serif;
+  padding: 1 px;
+}
+
+.outer {background-color:White;}
+            .outer > * {
+              display:inline-block;
+              vertical-align:middle;
+              background-color:White;
+            }
+            .one {width:300px; height:300px;}
+            .two {width:300px; height:300px;}
+            .three {width:300px; height:300px;}
+
+
+</style>
+
+
+	</head>
+	<body>
+<div id="container" style="width: 950px">
+<div id = "text" >
+    <h1>Gendered Scents</h1>
+    <text>Do fragrances condition women to clean more than men? 
+        Women's perfumes are floral while men are woody, closely followed by citrus.
+        To test this theory, we surveyed the 20 most popular cleaning products including Clorox, Dawn, and Tide. 
+        The most popular notes in cleaning products are citrus scents, closely followed
+        by floral scents. 
+    </text>
+
+</div>
+
+<div style="height:10px"></div>
+<div class="outer">
+	<div class="one" id="female_piechart">
+        <h2>Female Perfumes</h2>
+    </div>
+    <div class="two" id="male_piechart">
+        <h2>Male Perfumes</h2>
+    </div>
+
+    <div class="three" id="cleaning_piechart">
+        <h2>Cleaning Products</h2>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+	// set the dimensions and margins of the graph
+var width = 300
+    height = 225
+    margin = 30
+
+var colorrange = ["orange", "pink", "green", "red", "yellow", "brown", "purple", "gray" ]
+
+var textsize = ["10"]
+var font = ["sans-serif"]
+var fill = ["black"]
+
+
+// The radius of the pieplot is half the width or half the height (smallest one). I subtract a bit of margin.
+var radius = Math.min(width, height) / 2 - margin
+
+// append the svg object to the div called 'my_dataviz'
+var svg = d3.select("#female_piechart")
+            .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+
+            .append("g")
+                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+            // Create dummy data
+            var femaledata = {Citrus: 6, Floral: 45, Green:2, Fruity:8, Spices:0, Wooded:11, Balsamic:11, Gourmand: 15 }
+            
+            // set the color scale
+            var color = d3.scaleOrdinal()
+            .domain(femaledata)
+            .range(colorrange)
+            console.log(color)
+
+            // Compute the position of each group on the pie:
+            var pie = d3.pie()
+            .value(function(d) {return d.value; })
+            var data_ready = pie(d3.entries(femaledata))
+            console.log(data_ready)
+            //Now I know that group A goes from 0 degrees to x degrees and so on.
+
+            // shape helper to build arcs:
+            var arcGenerator = d3.arc()
+            .innerRadius(0)
+            .outerRadius(radius)
+
+            var outerArc = d3.arc()
+                .innerRadius(radius * 0.9)
+                .outerRadius(radius * 0.9)
+
+            // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+            svg
+            .selectAll('mySlices')
+            .data(data_ready)
+            .enter()
+            .append('path')
+                .attr('d', arcGenerator)
+                .attr('fill', function(d){ return(color(d.data.key)) })
+                .attr("stroke", "white")
+                .style("stroke-width", ".5px")
+                .style("opacity", 0.8)
+                
+
+            // Now add the annotation. Use the centroid method to get the best coordinates
+            svg
+            .selectAll('mySlices')
+            .data(data_ready)
+            .enter()
+            .append('text')
+            .text(function(d){return d.data.value > 0 ? d.data.key : ""})
+            .attr("transform", function(d) { 
+                var c = arcGenerator.centroid(d);
+                var x = 2.8, y = 2.2;
+                    if (d.data.key == "Citrus" || d.data.key == "Green" ) {
+                        x = 2.8; //1.8
+                        y = 2.3; //1.2
+                    }
+                    if (d.data.key == "Citrus"  ) {
+                        x = 3.0; //1.8
+                        y = 2.3; //1.2
+                    }
+                    if (d.data.key == "Gourmand" ) {
+                        x = 2.8; //1.8
+                        y = 2.6; //1.2
+                    }
+                    if (d.data.key == "Floral" ) {
+                        x = 2.4; //1.8
+                        y = 1; //1.2
+                    }
+                    return "translate(" + c[0]*x +"," + c[1]*y + ")";
+                    })
+            .style("text-anchor", "middle")
+            .style("font-size", textsize)
+                .attr("font-family", font)
+                .attr("fill", fill);
+
+
+  var svg = d3.select("#male_piechart")
+            .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+            .append("g")
+                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+            // Create dummy data
+            var femaledata = {Citrus: 20, Floral: 23, Green:13, Fruity:5, Spices:11, Wooded:25, Balsamic:11, Gourmand: 7 }
+
+            // set the color scale
+            var color = d3.scaleOrdinal()
+            .domain(femaledata)
+            .range(colorrange)
+            console.log(color)
+
+            // Compute the position of each group on the pie:
+            var pie = d3.pie()
+            .value(function(d) {return d.value; })
+            var data_ready = pie(d3.entries(femaledata))
+            console.log(data_ready)
+            //Now I know that group A goes from 0 degrees to x degrees and so on.
+
+            // shape helper to build arcs:
+            var arcGenerator = d3.arc()
+            .innerRadius(0)
+            .outerRadius(radius)
+
+            var outerArc = d3.arc()
+                .innerRadius(radius * 0.9)
+                .outerRadius(radius * 0.9)
+
+            // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+            svg
+            .selectAll('mySlices')
+            .data(data_ready)
+            .enter()
+            .append('path')
+                .attr('d', arcGenerator)
+                .attr('fill', function(d){ return(color(d.data.key)) })
+                .attr("stroke", "white")
+                .style("stroke-width", ".5px")
+                .style("opacity", 0.8)
+
+            // Now add the annotation. Use the centroid method to get the best coordinates
+            svg
+            .selectAll('mySlices')
+            .data(data_ready)
+            .enter()
+            .append('text')
+            .text(function(d){ return d.data.key})
+            .attr("transform", function(d) { 
+                var c = arcGenerator.centroid(d);
+                var x = 2.8, y = 2.2;
+                    if (d.data.key == "Citrus"  ) {
+                        x = 3.0; //1.8
+                        y = 2.4; //1.2
+                    }
+                    return "translate(" + c[0]*x +"," + c[1]*y + ")";
+                    })
+            .style("text-anchor", "middle")
+            .style("font-size", textsize)
+                .attr("font-family", font)
+                .attr("fill", fill);
+
+
+
+  var svg = d3.select("#cleaning_piechart")
+            .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+            .append("g")
+                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+            // Create dummy data
+            var femaledata = {Citrus: 27, Floral: 28, Green:3, Fruity:24, Spices:1, Wooded:1, Balsamic:2, Gourmand:5 }
+
+            // set the color scale
+            var color = d3.scaleOrdinal()
+            .domain(femaledata)
+            .range(colorrange)
+            console.log(color)
+
+            // Compute the position of each group on the pie:
+            var pie = d3.pie()
+            .value(function(d) {return d.value; })
+            var data_ready = pie(d3.entries(femaledata))
+            console.log(data_ready)
+            //Now I know that group A goes from 0 degrees to x degrees and so on.
+
+            // shape helper to build arcs:
+            // The arc generator
+            var arc = d3.arc()
+                .innerRadius(radius * 0.0)         // This is the size of the donut hole
+                .outerRadius(radius * 0.8)
+
+            var outerArc = d3.arc()
+                .innerRadius(radius * 0.9)
+                .outerRadius(radius * 0.9)
+
+            // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+            svg
+            .selectAll('mySlices')
+            .data(data_ready)
+            .enter()
+            .append('path')
+                .attr('d', arcGenerator)
+                .attr('fill', function(d){ return(color(d.data.key)) })
+                .attr("stroke", "white")
+                .style("stroke-width", ".5px")
+                .style("opacity", 0.8)
+                
+
+            // Now add the annotation. Use the centroid method to get the best coordinates
+            svg
+            .selectAll('mySlices')
+            .data(data_ready)
+            .enter()
+            .append('text')
+            .text(function(d){ return d.data.key})
+            .attr("transform", function(d) { 
+                var c = arcGenerator.centroid(d);
+                var x = 2.8, y = 2.2;
+                    if (d.data.key == "Wooded" ) {
+                        x = -15.1; //1.8
+                        y = 2.15; //1.2
+                    }
+                    if (d.data.key == "Citrus"  ) {
+                        x = 3.0; //1.8
+                        y = 2.3; //1.2
+                    }
+                    if (d.data.key == "Green"  ) {
+                        x = 4.1; //1.8
+                        y = 2.05; //1.2
+                    }
+                    if (d.data.key == "Balsamic" ) {
+                        x = 4.6; //1.8
+                        y = 2.2; //1.2
+                    }                    
+                    if (d.data.key == "Gourmand" ) {
+                        x = 3.6; //1.8
+                        y = 1.8; //1.2
+                    }
+                    if (d.data.key == "Spices" ) {
+                        x = 2.4; //1.8
+                        y = 2.4; //1.2
+                    }
+                    return "translate(" + c[0]*x +"," + c[1]*y + ")";
+                    })
+            .style("text-anchor", "middle")
+            .style("font-size", textsize)
+                .attr("font-family", font)
+                .attr("fill", fill);
+
+
+
+
+		</script>
+	</body>
+</html>

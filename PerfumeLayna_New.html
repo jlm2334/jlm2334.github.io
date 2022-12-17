@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+
+     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="../favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <title>Gendered Notes</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+   
+<script type="text/javascript" src="../d3.js"></script>
+    <style>
+
+	.link {
+		fill: none;
+		stroke: #ccc;
+		stroke-width: 2px;
+	}
+
+	.link.highlighted {
+		stroke: #000000;
+
+	
+	.noteText{
+		font-size:8px
+		font-family;sans-serif;
+	}
+	
+	
+	.perfumeText{
+		font-size:8px;
+		font-family:sans-serif;
+	}
+
+    div .linechart {
+		background-image: linear-gradient(red, yellow);
+	  }
+
+    </style>
+
+	
+
+</head>
+	<body>
+
+	<div id="linechart" class="linechart" 
+	style="background-image: rgb(255, 255, 255))";
+	
+	>
+	</div>
+	<text>Title Goes Here</text>
+
+	<script type="text/javascript"> 
+		
+		//NEW: Need to name the colors for each type - some fake ones here:
+		//TODO: determind what colors you want to use in each type and fill them in
+		var noteTypeColors = {
+			//gold and green are just commonly recognized colorwords I put in for now
+			"Citrus":"Orange",
+			"Green":"Green",
+			"Floral":"Pink",
+			"Aromatics":"Pink",
+			"Fruity":"Red",
+			"Balsamic":"Purple",
+			"Wooded":"Brown",
+			"Gourmand":"Gray",
+			"Spices":"Gold",
+		}
+		
+
+		//NEW: adding that note type dataset here - I added a header in the csv itself as well, it still needs some cleaning up - quotation marks etc.
+		Promise.all([d3.csv("PerfumeNotes_ACCleaned.csv"),d3.csv("Perfume Notes - NoteTypes.csv")])
+
+		.then(function(data){
+			
+			//NEW: organize note type into a  dictionary - see the function declaration
+			//pass in data[1] which is the 2nd csv we imported above			
+			var noteTypeDictionary = makeNoteTypeDictionary(data[1])
+			//console.log(noteTypeDictionary)
+			
+			
+			//this is where we are calling the function and putting the data into nodes
+			var links = processDataLinks(data[0])
+ 			var Perfumes = processDataPerfumeNodes(data[0])
+ 			var NoteNodes = processDataNoteNodes(data[0])
+			
+			//NEW: pass in all 3 datasets so that we can draw them, and then we will also pass in our new color info
+ 			drawlines(links, Perfumes, NoteNodes, noteTypeDictionary)
+
+			
+		})
+
+
+		function makeNoteTypeDictionary(dataset){
+			//NEW: here is the dictionary we will put the note to notetype info
+			var formatted = {}
+			console.log(dataset)
+			for(var i in dataset){
+				if(dataset[i].noteType !=undefined){
+					var noteType = dataset[i].noteType
+					var notes = dataset[i].notes.replace("[","").replace("]","").split(",")
+					console.log(noteType,notes)
+					//NEW: once again we will loop through and make key value pairs
+					for(n in notes){
+						var note = notes[n]
+						console.log(note)
+						//NEW: make a match between note and notetype
+						formatted[note]=noteType
+					}	
+					
+				}
+							
+			}
+			console.log(formatted)
+			return formatted
+		}
+
+		//this function, which is called above with the csv, makes nodes between each perfume and note
+
+		function processDataLinks(dataset){
+
+			//console.log(dataset)
+			var links = []
+			for(var i in dataset){
+
+				//console.log(i)
+				var perfume = dataset[i]["Perfume Name"] 
+				//console.log(perfume);
+				//return perfume
+
+		if(perfume!=undefined){ 
+					var notes = dataset[i]["Notes"].replace("[","").replace("]","").split(", ")
+					for(var n in notes){
+						// console.log(notes[n])
+						var note = notes[n]
+						var link = [perfume,note]
+						links.push(link)
+					}
+				} 		
+			}
+		//	console.log(links);
+			return links
+		}
+		
+
+		//here you can make a similar loop to make a list of perfumes
+function processDataPerfumeNodes(dataset){
+		perfumes = []
+		for (var i in dataset){
+				var perfumename = dataset[i]["Perfume Name"]
+			if(perfumename!=undefined){
+				perfumes.push(perfumename)
+			}
+		}
+				console.log(perfumes)
+				return perfumes
+}
+
+		//here you can make another for a list of notes
+		//List of perfume nodes
+function processDataNoteNodes(dataset){
+		notenodes = []
+		indnotes = []
+		for(var i in dataset){
+			if(dataset[i]["Notes"]!=undefined){
+				var notes = dataset[i]["Notes"].replace("[","").replace("]","").split(", ")
+				for (var n in notes) {
+				var note = notes[n]
+				if (notenodes.indexOf(note)==-1)
+					{
+					notenodes.push(notes[n])
+					}
+				}
+			}
+			
+		}
+		//NEW: this return statements needs to be outside of the loops so that you return the whole array, not the first only
+		console.log(notenodes)		
+		return notenodes
+}
+		
+
+
+//var notenumber = 
+		
+				
+function drawlines(linksDataset, perfumesDataset, notesDataset, typeDictionary){
+	//console.log(linksDataset,perfumesDataset,notesDataset)
+		//NEW I took out a portion which is drawing a test line before
+			
+		
+			var w = 1200;
+			var h = 900;
+			var padding = 20;
+			var svg = d3.select("#linechart")
+				.append("svg")
+				.attr("width",w)
+				.attr("height",h);
+			
+			 var margin = {
+				top: 15,
+				right: 25,
+				bottom: 15,
+				left: 60
+				};
+				
+			for (var d in linksDataset){
+			
+				//NEW here we want to chante the y from simply d to where the nodes will be
+				//we use the index of the link source in perfumes array to set x1, and same for the link target in notes for x2
+				
+				//here is the name of the perfume
+				var linkSource = linksDataset[d][0]
+				//here is the order number of that perfume in the perfumes array
+				var sourceIndex = perfumesDataset.indexOf(linkSource)
+				
+				//same with the notes here below
+				var linkTarget = linksDataset[d][1]
+				var targetIndex   = notesDataset.indexOf(linkTarget)
+				
+				//console.log(sourceIndex,linkSource,targetIndex, linkTarget)
+				
+				//NEW: adding a scale here to space out the y values
+				var noteyScale = d3.scaleLinear().domain([0,77]).range([0,850])
+				var perfumeyScale = d3.scaleLinear().domain([0,40]).range([0,850])
+				
+				svg.append('line')
+					.style("stroke", "lightgreen")
+					.style("stroke-width", 1)
+					.attr("x1", 300)
+					//let's set y1 to the index of the perfume
+					.attr("y1", perfumeyScale(sourceIndex)+padding)
+					.attr("x2", 600)
+					//and set y2 to index of notes
+					.attr("y2", noteyScale(targetIndex)+padding) 
+					//NEW: lets test the colors here
+					.style("stroke", function(){
+						
+						//NEW: our note is linkTarget
+						//so our note type is 
+						var noteType = typeDictionary[linkTarget]
+						//console.log(noteType)
+						//and our color using the color dictionary is:
+						
+						var color = noteTypeColors[noteType]
+						//Temporary if statement here because the color dictionary doesn't have every note type yet.
+						//so if the color is undefined in the dictionary, it will be grey
+						if(color ==undefined){
+							color ="grey"
+						}
+						//console.log(color)
+						return color
+					})
+					
+			}			
+			
+			
+			
+			//NEW: you can actually draw the nodes directly here in the same function, or separate it out.
+			svg.selectAll(".perfumeCircles")
+			.data(perfumesDataset)
+			.enter()
+			.append("circle")
+			.attr("class","perfumeCircles")
+			.attr("r",1.5)
+			.attr("cx",300)
+			.attr("cy",function(d,i){
+				return perfumeyScale(i) +padding
+			})
+			
+			svg.selectAll(".perfumeText")
+				.data(perfumesDataset)
+				.enter()
+				.append("text")
+				.attr("class","perfumeText")
+				.attr("x",296)
+				.attr("y",function(d,i){
+					return perfumeyScale(i)+padding
+				})
+				.attr("text-anchor","end")
+				.attr("alignment-baseline","middle")
+				.attr("font-family", "sans-serif")
+				.attr("font-size", 9)
+				.text(function(d){
+					return d
+				})
+			
+			svg.selectAll(".noteCircles")
+				.data(notesDataset)
+				.enter()
+				.append("circle")
+				.attr("class","noteCircles")
+				.attr("r",1.5)
+				.attr("cx",600)
+				.attr("cy",function(d,i){
+					return noteyScale(i)+padding
+					})
+					
+			svg.selectAll(".noteText")
+				.data(notesDataset)
+				.enter()
+				.append("text")
+				.attr("class","noteText")
+				.attr("x",603)
+				.attr("y",function(d,i){
+					return noteyScale(i)+padding
+				})
+				.attr("font-size",8)
+				.attr("alignment-baseline","middle")
+				.attr("font-family", "sans-serif")
+				.attr("text-anchor", "start")
+				.attr("y",function(d,i){
+					return noteyScale(i)+padding
+				})
+				.attr("font-color", function(){
+
+						var noteType = typeDictionary[linkTarget]
+						console.log(noteType)
+						//and our color using the color dictionary is:
+						
+						var color = noteTypeColors[noteType]
+						//Temporary if statement here because the color dictionary doesn't have every note type yet.
+						//so if the color is undefined in the dictionary, it will be grey
+						if(color ==undefined){
+							color ="grey"
+						}
+						//console.log(color)
+						return color
+					})
+				.text(function(d){
+					return d
+				})
+			//TODO you can draw a circle and label for each of the nodes to the right in a similar way as perfumes.done
+			//the difference ehre would be that that text-anchor attribute has to be set to the start, so the text is aligned differently
+			//there is also some other alignment issues here, text is written from bottom up, so it is always higher than the shapes, so adding some pixels will help. 
+			//the entire chart may need to be moved to get the text and graphics to fit. 
+			//the colors were demonstrated in the links drawing above, use the same steps from there to set colors for nodes.
+}
+
+
+
+		</script>
+
+	</body>
+
+</html>
